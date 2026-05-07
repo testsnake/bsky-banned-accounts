@@ -1,0 +1,16 @@
+# files
+.vscode
+.env
+.env.local
+package-lock.json
+yarn.lock
+config.json
+*.db
+*.db-shm
+*.db-wal
+
+# folders
+build
+node_modules
+cache
+data
