@@ -1,51 +1,59 @@
 import { logger } from "./logger";
 
-export async function getAccountAgeAndHandle(did: string): Promise<{ age: number | null; handle: string | null }> {
-  if (!did.startsWith('did:plc:')) {
-    return { age: null, handle: did };
-  }
+const KNOWN_DIDS: Record<string, string> = {
+    "did:plc:ar7c4by46qjdydhdevvrndac": "moderation.bsky.app",
+    "did:plc:d2mkddsbmnrgr3domzg5qexf": "moderation.blacksky.app",
+};
 
-  try {
-    const res = await fetch(`https://plc.directory/${did}/log/audit`);
-    
-    if (!res.ok) {
-        console.error(`Failed to fetch PLC log for ${did}: HTTP ${res.status}`);
+export async function getAccountAgeAndHandle(did: string): Promise<{ age: number | null; handle: string | null }> {
+    if (did in KNOWN_DIDS) {
+        return { age: null, handle: KNOWN_DIDS[did] };
+    }
+
+    if (!did.startsWith("did:plc:")) {
+        return { age: null, handle: did };
+    }
+
+    try {
+        const res = await fetch(`https://plc.directory/${did}/log/audit`);
+
+        if (!res.ok) {
+            console.error(`Failed to fetch PLC log for ${did}: HTTP ${res.status}`);
+            return { age: null, handle: null };
+        }
+
+        const log = await res.json();
+
+        if (!Array.isArray(log) || log.length === 0) {
+            return { age: null, handle: null };
+        }
+
+        let ageMs: number | null = null;
+        // log[0] is the genesis operation (the oldest).
+        if (log[0].createdAt) {
+            const createdAt = new Date(log[0].createdAt);
+            ageMs = Date.now() - createdAt.getTime();
+        }
+
+        let handle: string | null = null;
+        // Start at the end (the newest) and work backwards to find the current handle
+        for (let i = log.length - 1; i >= 0; i--) {
+            // Look for the operation data whether it's wrapped in .operation or at the root
+            const operationData = log[i].operation || log[i];
+            const aliases = operationData.alsoKnownAs;
+
+            if (aliases && Array.isArray(aliases) && aliases.length > 0) {
+                // Strip the 'at://' prefix and break out of the loop
+                handle = aliases[0].replace("at://", "");
+                break;
+            }
+        }
+
+        return { age: ageMs, handle };
+    } catch (error) {
+        console.error(`Failed to fetch or parse PLC log for ${did}:`, error);
         return { age: null, handle: null };
     }
-
-    const log = await res.json();
-
-    if (!Array.isArray(log) || log.length === 0) {
-      return { age: null, handle: null };
-    }
-
-    let ageMs: number | null = null;
-    // log[0] is the genesis operation (the oldest).
-    if (log[0].createdAt) {
-        const createdAt = new Date(log[0].createdAt);
-        ageMs = Date.now() - createdAt.getTime();
-    }
-
-    let handle: string | null = null;
-    // Start at the end (the newest) and work backwards to find the current handle
-    for (let i = log.length - 1; i >= 0; i--) {
-      // Look for the operation data whether it's wrapped in .operation or at the root
-      const operationData = log[i].operation || log[i];
-      const aliases = operationData.alsoKnownAs;
-
-      if (aliases && Array.isArray(aliases) && aliases.length > 0) {
-        // Strip the 'at://' prefix and break out of the loop
-        handle = aliases[0].replace('at://', '');
-        break; 
-      }
-    }
-
-    return { age: ageMs, handle };
-    
-  } catch (error) {
-    console.error(`Failed to fetch or parse PLC log for ${did}:`, error);
-    return { age: null, handle: null };
-  }
 }
 
 export function formatDuration(ms: number): string {
