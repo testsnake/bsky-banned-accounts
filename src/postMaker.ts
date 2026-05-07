@@ -25,10 +25,10 @@ export class PostMaker {
         if (options.did.startsWith("at://")) {
             // maybe re-add later?
             // const { handle: srcHandle } = await getAccountAgeAndHandle(options.src);
-            
+
             // let recordType = "Record";
             // let hashtag = "#bskyModeration";
-            
+
             // if (options.did.includes("/app.bsky.feed.post/")) {
             //     recordType = "Post";
             //     hashtag = "#bskyModeration #postremoved";
@@ -40,7 +40,7 @@ export class PostMaker {
             // }
 
             // const postContent = `${recordType} ${options.did} was removed by ${srcHandle ?? options.src} ${hashtag}`;
-            
+
             // await this.makePost(postContent);
             // logger.info(`Handled record takedown: ${postContent}`);
             logger.debug("skipping non-account takedown for " + options.did);
@@ -61,32 +61,38 @@ export class PostMaker {
 
         const { handle: srcHandle } = await getAccountAgeAndHandle(options.src);
 
-        const oldAccountTag = accountAge !== null && accountAge > 365 * ONE_DAY_MS ? " #OldAccountBan" : "";
+        const oldAccountTag =
+            accountAge === null
+                ? ""
+                : accountAge >= 365 * ONE_DAY_MS
+                ? " #oldAccountBan"
+                : accountAge >= 180 * ONE_DAY_MS
+                ? " #youngAccountBan"
+                : " #newAccountBan";
 
-        const ageText = accountAge !== null 
-            ? `\n\nThe account was ${formatDuration(accountAge)} old at the time of banning.` 
-            : "";
+        const ageText =
+            accountAge !== null ? `\n\nThe account was ${formatDuration(accountAge)} old at the time of banning.` : "";
 
         const postContent = `Account ${handle ?? options.did} was banned by ${srcHandle ?? options.src}.${ageText} #BskyBans${oldAccountTag}`;
         await this.makePost(postContent);
 
-        logger.info(`Handled takedown: ${postContent}`); 
+        logger.info(`Handled takedown: ${postContent}`);
     }
 
     public async handleUntakedown(options: TakedownOptions): Promise<void> {
         if (options.did.startsWith("at://")) {
             // const { handle: srcHandle } = await getAccountAgeAndHandle(options.src);
-            
+
             // let recordType = "Record";
             // let hashtag = "#bskyModeration";
-            
+
             // if (options.did.includes("/app.bsky.feed.post/")) {
             //     recordType = "Post";
             //     hashtag = "#bskyModeration #postrestored";
             // }
 
             // const postContent = `${recordType} ${options.did} was restored by ${srcHandle ?? options.src} ${hashtag}`;
-            
+
             // await this.makePost(postContent);
             // logger.info(`Handled record untakedown: ${postContent}`);
             return; // Exit early!
@@ -98,7 +104,8 @@ export class PostMaker {
 
         if (entry) {
             const timeSinceTakedown = entry ? Date.now() - entry.takedownDate : null;
-            const timeSinceTakedownStr = timeSinceTakedown !== null ? formatDuration(timeSinceTakedown) : "unknown time";
+            const timeSinceTakedownStr =
+                timeSinceTakedown !== null ? formatDuration(timeSinceTakedown) : "unknown time";
             timeString = ` after ${timeSinceTakedownStr}`;
         }
 
@@ -112,7 +119,7 @@ export class PostMaker {
         this.userDatabase.remove(options.did, options.src);
 
         logger.info(`Handled untakedown: ${postContent}`);
-    } 
+    }
 
     public async makePost(postContent: string): Promise<void> {
         const rt = new RichText({ text: postContent });
