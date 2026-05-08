@@ -47,7 +47,7 @@ export class PostMaker {
             return;
         }
 
-        const { age: accountAge, handle } = await getAccountAgeAndHandle(options.did);
+        const { age: accountAge, handle: handles } = await getAccountAgeAndHandle(options.did);
 
         if (accountAge !== null && accountAge < SPAM_GRACE_PERIOD_MS) {
             return;
@@ -59,21 +59,24 @@ export class PostMaker {
             takedownDate: Date.now(),
         });
 
-        const { handle: srcHandle } = await getAccountAgeAndHandle(options.src);
+        const { handle: srcHandles } = await getAccountAgeAndHandle(options.src);
 
         const oldAccountTag =
             accountAge === null
                 ? ""
                 : accountAge >= 365 * ONE_DAY_MS
-                ? " #oldAccountBan"
-                : accountAge >= 180 * ONE_DAY_MS
-                ? " #youngAccountBan"
-                : " #newAccountBan";
+                  ? " #oldAccountBan"
+                  : accountAge >= 180 * ONE_DAY_MS
+                    ? " #youngAccountBan"
+                    : " #newAccountBan";
 
         const ageText =
             accountAge !== null ? `\n\nThe account was ${formatDuration(accountAge)} old at the time of banning.` : "";
 
-        const postContent = `Account ${handle ?? options.did} was banned by ${srcHandle ?? options.src}.${ageText} #BskyBans${oldAccountTag}`;
+        const previousHandlesText =
+            handles && handles.length > 1 ? `\n\nPrevious known handles: ${handles.slice(1, 3).join(", ")}` : "";
+
+        const postContent = `Account ${handles?.[0] ?? options.did} was banned by ${srcHandles?.[0] ?? options.src}.${ageText}${previousHandlesText} #BskyBans${oldAccountTag}`;
         await this.makePost(postContent);
 
         logger.info(`Handled takedown: ${postContent}`);
@@ -109,10 +112,10 @@ export class PostMaker {
             timeString = ` after ${timeSinceTakedownStr}`;
         }
 
-        const { handle: handle } = await getAccountAgeAndHandle(options.did);
-        const { handle: srcHandle } = await getAccountAgeAndHandle(options.src);
+        const { handle: handles } = await getAccountAgeAndHandle(options.did);
+        const { handle: srcHandles } = await getAccountAgeAndHandle(options.src);
 
-        const postContent = `Account ${handle ?? options.did} was unbanned by ${srcHandle ?? options.src}${timeString} #BskyUnbans`;
+        const postContent = `Account ${handles?.[0] ?? options.did} was unbanned by ${srcHandles?.[0] ?? options.src}${timeString} #BskyUnbans`;
 
         await this.makePost(postContent);
 
