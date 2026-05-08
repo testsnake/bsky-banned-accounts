@@ -1,0 +1,3 @@
+this bot was banned by bluesky for "trust and transparency" reasons
+
+open protocol until it isnt...
