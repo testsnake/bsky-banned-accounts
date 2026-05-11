@@ -74,10 +74,12 @@ export class PostMaker {
             accountAge !== null ? `\n\nThe account was ${formatDuration(accountAge)} old at the time of banning.` : "";
 
         const previousHandlesText =
-            handles && handles.length > 1 ? `\n\nPrevious known handles: ${handles.slice(1, 3).join(", ")}` : "";
+            handles && handles.length > 1 ? `\nPrevious known handles: ${handles.slice(1, 3).join(", ")}` : "";
+            
+        const detailsOfTakedown = `\n\nDetails:\nLabel: ${options.label.val}\ndid: ${options.label.uri}\nLabel created at: ${options.label.cts}${previousHandlesText}`;
 
-        const postContent = `Account ${handles?.[0] ?? options.did} was banned by ${srcHandles?.[0] ?? options.src}.${ageText}${previousHandlesText} #BskyBans${oldAccountTag}`;
-        await this.makePost(postContent);
+        const postContent = `Account ${handles?.[0] ?? options.did} was banned by ${srcHandles?.[0] ?? options.src}.${ageText}#BskyBans${oldAccountTag}`;
+        await this.makePost([postContent, detailsOfTakedown]);
 
         logger.info(`Handled takedown: ${postContent}`);
     }
@@ -124,25 +126,45 @@ export class PostMaker {
         logger.info(`Handled untakedown: ${postContent}`);
     }
 
-    public async makePost(postContent: string): Promise<void> {
-        const rt = new RichText({ text: postContent });
-        await rt.detectFacets(this.agent);
+    public async makePost(postContent: string | string[]): Promise<void> {
+        const posts = Array.isArray(postContent) ? postContent : [postContent];
 
-        // remove accidental mentions, dont wanna get banned for mass mentioning people
-        rt.facets = rt.facets?.map((facet) => {
-            if (facet.features?.some((feature) => feature.$type === "app.bsky.richtext.facet#mention")) {
-                return {
-                    ...facet,
-                    features: facet.features?.filter((feature) => feature.$type !== "app.bsky.richtext.facet#mention"),
-                };
-            }
-            return facet;
-        });
+        let rootRef: { uri: string; cid: string } | undefined;
+        let parentRef: { uri: string; cid: string } | undefined;
 
-        await this.agent.post({
-            text: postContent,
-            facets: rt.facets,
-            langs: ["en"],
-        });
+        for (const text of posts) {
+            const rt = new RichText({ text });
+            await rt.detectFacets(this.agent);
+
+            rt.facets = rt.facets?.map((facet) => {
+                if (facet.features?.some((feature) => feature.$type === "app.bsky.richtext.facet#mention")) {
+                    return {
+                        ...facet,
+                        features: facet.features?.filter(
+                            (feature) => feature.$type !== "app.bsky.richtext.facet#mention",
+                        ),
+                    };
+                }
+                return facet;
+            });
+
+            const reply =
+                rootRef && parentRef
+                    ? {
+                          root: { uri: rootRef.uri, cid: rootRef.cid },
+                          parent: { uri: parentRef.uri, cid: parentRef.cid },
+                      }
+                    : undefined;
+
+            const response = await this.agent.post({
+                text,
+                facets: rt.facets,
+                langs: ["en"],
+                reply,
+            });
+
+            if (!rootRef) rootRef = { uri: response.uri, cid: response.cid };
+            parentRef = { uri: response.uri, cid: response.cid };
+        }
     }
 }
