@@ -32,7 +32,7 @@ export class PostMaker {
     public async handleTakedown(options: TakedownOptions): Promise<void> {
         // check if record we wanna look at (in label_types)
         if (!(options.label.val in LABEL_TYPES)) {
-            logger.debug(`Skipping takedown for label: ${options.label.val} on ${options.did} from ${options.src}`);
+            //logger.debug(`Skipping takedown for label: ${options.label.val} on ${options.did} from ${options.src}`);
             return;
         }
 
