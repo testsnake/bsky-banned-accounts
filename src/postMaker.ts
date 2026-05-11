@@ -14,6 +14,14 @@ export interface TakedownOptions {
     label: Label;
 }
 
+export const LABEL_TYPES: Record<string, string> = {
+    "!takedown": "banned",
+    "!suspend": "suspended",
+    "!hide": "hidden",
+    "!warn": "marked with a warning",
+    rude: "marked as rude",
+};
+
 export class PostMaker {
     private userDatabase = UserDatabase.getInstance();
     private agent: AtpAgent;
@@ -22,6 +30,12 @@ export class PostMaker {
     }
 
     public async handleTakedown(options: TakedownOptions): Promise<void> {
+        // check if record we wanna look at (in label_types)
+        if (!(options.label.val in LABEL_TYPES)) {
+            logger.debug(`Skipping takedown for label: ${options.label.val} on ${options.did} from ${options.src}`);
+            return;
+        }
+
         if (options.did.startsWith("at://")) {
             // maybe re-add later?
             // const { handle: srcHandle } = await getAccountAgeAndHandle(options.src);
@@ -61,25 +75,34 @@ export class PostMaker {
 
         const { handle: srcHandles } = await getAccountAgeAndHandle(options.src);
 
+        // acount
+        const userHandle = handles ? (`${handles[0]} (${options.did})`) : options.did;
+        // was
+        const actionType = LABEL_TYPES[options.label.val] || "labeled";
+        // by
+        const srcHandlePart = srcHandles ? ` by ${srcHandles[0]}` : ` by ${options.src}`;
+
         const oldAccountTag =
             accountAge === null
                 ? ""
-                : accountAge >= 365 * ONE_DAY_MS
-                  ? " #oldAccountBan"
-                  : accountAge >= 180 * ONE_DAY_MS
-                    ? " #youngAccountBan"
-                    : " #newAccountBan";
+                : accountAge >= 730 * ONE_DAY_MS
+                  ? " #veryOldAccountBan"
+                  : accountAge >= 365 * ONE_DAY_MS
+                    ? " #oldAccountBan"
+                    : accountAge >= 180 * ONE_DAY_MS
+                      ? " #youngAccountBan"
+                      : " #newAccountBan";
 
         const ageText =
             accountAge !== null ? `\n\nThe account was ${formatDuration(accountAge)} old at the time of banning.` : "";
 
         const previousHandlesText =
             handles && handles.length > 1 ? `\nPrevious known handles: ${handles.slice(1, 3).join(", ")}` : "";
-            
-        const detailsOfTakedown = `\n\nDetails:\nLabel: ${options.label.val}\ndid: ${options.label.uri}\nLabel created at: ${options.label.cts}${previousHandlesText}`;
 
-        const postContent = `Account ${handles?.[0] ?? options.did} was banned by ${srcHandles?.[0] ?? options.src}.${ageText}#BskyBans${oldAccountTag}`;
-        await this.makePost([postContent, detailsOfTakedown]);
+        const detailsOfTakedown = `Details:\nLabel: ${options.label.val}\ndid: ${options.label.uri}\nLabel created at: ${options.label.cts}${previousHandlesText}`;
+
+        const postContent = `Account ${userHandle} was ${actionType} by ${srcHandlePart}${ageText} #BskyBans${oldAccountTag}`;
+        await this.makePost([postContent]);
 
         logger.info(`Handled takedown: ${postContent}`);
     }
