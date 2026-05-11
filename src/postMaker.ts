@@ -80,7 +80,7 @@ export class PostMaker {
         // was
         const actionType = LABEL_TYPES[options.label.val] || "labeled";
         // by
-        const srcHandlePart = srcHandles ? ` by ${srcHandles[0]}` : ` by ${options.src}`;
+        const srcHandlePart = srcHandles ? `${srcHandles[0]}` : `${options.src}`;
 
         const oldAccountTag =
             accountAge === null
