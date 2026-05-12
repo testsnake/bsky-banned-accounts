@@ -12,7 +12,7 @@ export interface UserEntry {
 }
 
 export class UserDatabase {
-    private readonly db = new Database(DB_PATH, { verbose: (msg) => logger.debug({ msg }, "DB") });
+    private readonly db = new Database(DB_PATH, /* { verbose: (msg) => logger.debug({ msg }, "DB") } */);
     private static instance: UserDatabase | null = null;
 
     private constructor() {

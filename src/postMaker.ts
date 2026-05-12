@@ -99,13 +99,14 @@ export class PostMaker {
         const previousHandlesText =
             handles && handles.length > 1 ? `\nPrevious known handles: ${handles.slice(1, 3).join(", ")}` : "";
 
-        const detailsOfTakedown = `Details:\nLabel: ${options.label.val}\ndid: ${options.label.uri}\nLabel created at: ${options.label.cts}${previousHandlesText}`;
+        // const detailsOfTakedown = `Details:\nLabel: ${options.label.val}\ndid: ${options.label.uri}\nLabel created at: ${options.label.cts}${previousHandlesText}`;
 
         const postContent = `Account ${userHandle} was ${actionType} by ${srcHandlePart}${ageText} #BskyBans${oldAccountTag}`;
         await this.makePost([postContent]);
 
-        logger.info(`Handled takedown: ${postContent}`);
-        logger.debug(`Takedown details: ${detailsOfTakedown}`);
+
+        logger.debug(`[handleTakedown] ${userHandle} - ${actionType} by ${srcHandlePart} | label: ${options.label.val} | neg: ${options.label.neg} | accountAge: ${accountAge !== null ? formatDuration(accountAge) : "unknown"}`);
+
     }
 
     public async handleUntakedown(options: TakedownOptions): Promise<void> {
@@ -142,16 +143,18 @@ export class PostMaker {
         const { handle: srcHandles } = await getAccountAgeAndHandle(options.src);
         const actionType = LABEL_TYPES[options.label.val] || "labeled";
 
-        const details = `Untakedown details:\nLabel: ${options.label.val}\ndid: ${options.label.uri}\nLabel created at: ${options.label.cts}`;
-
         const postContent = `Account ${handles?.[0] ?? options.did} was un${actionType} by ${srcHandles?.[0] ?? options.src}${timeString} #BskyUnbans`;
 
         await this.makePost(postContent);
 
         this.userDatabase.remove(options.did, options.src);
 
-        logger.info(`Handled untakedown: ${postContent}`);
-        logger.debug(details);
+        // logger.info(`Handled untakedown: ${postContent}`);
+        // logger.debug(details);
+
+        logger.debug(`[handleUntakedown] ${handles?.[0] ?? options.did} - un${actionType} by ${srcHandles?.[0] ?? options.src} | label: ${options.label.val} | neg: ${options.label.neg} | timeSinceTakedown: ${timeString}`);
+
+        
     }
 
     public async makePost(postContent: string | string[]): Promise<void> {
