@@ -76,7 +76,7 @@ export class PostMaker {
         const { handle: srcHandles } = await getAccountAgeAndHandle(options.src);
 
         // acount
-        const userHandle = handles ? (`${handles[0]} (${options.did})`) : options.did;
+        const userHandle = handles ? (`${handles[0]}`) : options.did;
         // was
         const actionType = LABEL_TYPES[options.label.val] || "labeled";
         // by
