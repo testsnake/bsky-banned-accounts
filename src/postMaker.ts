@@ -19,7 +19,7 @@ export const LABEL_TYPES: Record<string, string> = {
     "!suspend": "suspended",
     "!hide": "hidden",
     "!warn": "marked with a warning",
-    "rude": "marked as rude",
+    rude: "marked as rude",
 };
 
 export class PostMaker {
@@ -76,7 +76,7 @@ export class PostMaker {
         const { handle: srcHandles } = await getAccountAgeAndHandle(options.src);
 
         // acount
-        const userHandle = handles ? (`${handles[0]}`) : options.did;
+        const userHandle = handles ? `${handles[0]}` : options.did;
         // was
         const actionType = LABEL_TYPES[options.label.val] || "labeled";
         // by
@@ -104,9 +104,13 @@ export class PostMaker {
         const postContent = `Account ${userHandle} was ${actionType} by ${srcHandlePart}${ageText} #BskyBans${oldAccountTag}`;
         await this.makePost([postContent]);
 
-
-        logger.debug(`[${srcHandlePart}] add ${options.label.val}\t${userHandle}\t\t(${options.did})\t\taccountAge: ${accountAge !== null ? formatDuration(accountAge) : "unknown"}`);
-
+        logger.debug(
+            `[${srcHandlePart}]`.padEnd(20) +
+                `add ${options.label.val}`.padEnd(20) +
+                `${userHandle}`.padEnd(40) +
+                `(${options.did})`.padEnd(36) +
+                `accountAge: ${accountAge !== null ? formatDuration(accountAge) : "unknown"}`,
+        );
     }
 
     public async handleUntakedown(options: TakedownOptions): Promise<void> {
@@ -141,9 +145,14 @@ export class PostMaker {
 
         const { handle: handles } = await getAccountAgeAndHandle(options.did);
         const { handle: srcHandles } = await getAccountAgeAndHandle(options.src);
+        // acount
+        const userHandle = handles ? `${handles[0]}` : options.did;
+        // was
         const actionType = LABEL_TYPES[options.label.val] || "labeled";
+        // by
+        const srcHandlePart = srcHandles ? `${srcHandles[0]}` : `${options.src}`;
 
-        const postContent = `Account ${handles?.[0] ?? options.did} was un${actionType} by ${srcHandles?.[0] ?? options.src}${timeString} #BskyUnbans`;
+        const postContent = `Account ${userHandle} was un${actionType} by ${srcHandlePart}${timeString} #BskyUnbans`;
 
         await this.makePost(postContent);
 
@@ -152,9 +161,13 @@ export class PostMaker {
         // logger.info(`Handled untakedown: ${postContent}`);
         // logger.debug(details);
 
-        logger.debug(`[${srcHandles?.[0] ?? options.src}] rm ${options.label.val}\t${handles?.[0] ?? options.did}\t\t(${options.did})\t\tuntakedown${timeString}`);
-
-        
+        logger.debug(
+            `[${srcHandlePart}]`.padEnd(20) +
+                `remove ${options.label.val}`.padEnd(20) +
+                `${userHandle}`.padEnd(40) +
+                `(${options.did})`.padEnd(36) +
+                `time since takedown: ${timeString.trim()}`,
+        );
     }
 
     public async makePost(postContent: string | string[]): Promise<void> {
