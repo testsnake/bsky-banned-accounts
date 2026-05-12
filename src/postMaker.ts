@@ -70,7 +70,7 @@ export class PostMaker {
             const { handle: srcHandles } = await getAccountAgeAndHandle(options.src);
             const srcHandlePart = srcHandles ? `${srcHandles[0]}` : `${options.src}`;
 
-            logger.debug(
+            logger.info(
                 `[${srcHandlePart}]`.padEnd(SRC_HANDLE_MAX_LENGTH) +
                     `add ${options.label.val}`.padEnd(ACTION_TYPE_MAX_LENGTH) +
                     `${options.did}`.padEnd(LONG_URI_MAX_LENGTH) +
@@ -123,7 +123,7 @@ export class PostMaker {
         const postContent = `Account ${userHandle} was ${actionType} by ${srcHandlePart}${ageText} #BskyBans${oldAccountTag}`;
         await this.makePost([postContent]);
 
-        logger.debug(
+        logger.info(
             `[${srcHandlePart}]`.padEnd(SRC_HANDLE_MAX_LENGTH) +
                 `add ${options.label.val}`.padEnd(ACTION_TYPE_MAX_LENGTH) +
                 `${userHandle}`.padEnd(USER_HANDLE_MAX_LENGTH) +
@@ -180,9 +180,9 @@ export class PostMaker {
         // logger.info(`Handled untakedown: ${postContent}`);
         // logger.debug(details);
 
-        logger.debug(
+        logger.info(
             `[${srcHandlePart}]`.padEnd(SRC_HANDLE_MAX_LENGTH) +
-                `remove ${options.label.val}`.padEnd(ACTION_TYPE_MAX_LENGTH) +
+                `neg ${options.label.val}`.padEnd(ACTION_TYPE_MAX_LENGTH) +
                 `${userHandle}`.padEnd(USER_HANDLE_MAX_LENGTH) +
                 `(${options.did})`.padEnd(DID_MAX_LENGTH) +
                 `time since takedown: ${timeString.trim()}`,
