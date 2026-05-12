@@ -105,6 +105,7 @@ export class PostMaker {
         await this.makePost([postContent]);
 
         logger.info(`Handled takedown: ${postContent}`);
+        logger.debug(`Takedown details: ${detailsOfTakedown}`);
     }
 
     public async handleUntakedown(options: TakedownOptions): Promise<void> {
@@ -141,6 +142,8 @@ export class PostMaker {
         const { handle: srcHandles } = await getAccountAgeAndHandle(options.src);
         const actionType = LABEL_TYPES[options.label.val] || "labeled";
 
+        const details = `Untakedown details:\nLabel: ${options.label.val}\ndid: ${options.label.uri}\nLabel created at: ${options.label.cts}`;
+
         const postContent = `Account ${handles?.[0] ?? options.did} was un${actionType} by ${srcHandles?.[0] ?? options.src}${timeString} #BskyUnbans`;
 
         await this.makePost(postContent);
@@ -148,6 +151,7 @@ export class PostMaker {
         this.userDatabase.remove(options.did, options.src);
 
         logger.info(`Handled untakedown: ${postContent}`);
+        logger.debug(details);
     }
 
     public async makePost(postContent: string | string[]): Promise<void> {
