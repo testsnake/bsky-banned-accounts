@@ -19,7 +19,7 @@ export const LABEL_TYPES: Record<string, string> = {
     "!suspend": "suspended",
     "!hide": "hidden",
     "!warn": "marked with a warning",
-    rude: "marked as rude",
+    "rude": "marked as rude",
 };
 
 export class PostMaker {
