@@ -105,7 +105,7 @@ export class PostMaker {
         await this.makePost([postContent]);
 
 
-        logger.debug(`[handleTakedown] ${userHandle} - ${actionType} by ${srcHandlePart} | label: ${options.label.val} | neg: ${options.label.neg} | accountAge: ${accountAge !== null ? formatDuration(accountAge) : "unknown"}`);
+        logger.debug(`[handleTakedown] ${userHandle} - ${actionType} by ${srcHandlePart} | label: ${options.label.val} | accountAge: ${accountAge !== null ? formatDuration(accountAge) : "unknown"}`);
 
     }
 
@@ -152,7 +152,7 @@ export class PostMaker {
         // logger.info(`Handled untakedown: ${postContent}`);
         // logger.debug(details);
 
-        logger.debug(`[handleUntakedown] ${handles?.[0] ?? options.did} - un${actionType} by ${srcHandles?.[0] ?? options.src} | label: ${options.label.val} | neg: ${options.label.neg} | timeSinceTakedown: ${timeString}`);
+        logger.debug(`[handleUntakedown] ${handles?.[0] ?? options.did} - un${actionType} by ${srcHandles?.[0] ?? options.src} | label: ${options.label.val} | timeSinceTakedown: ${timeString}`);
 
         
     }
