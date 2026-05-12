@@ -8,6 +8,14 @@ const SPAM_GRACE_PERIOD_DAYS = 14;
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const SPAM_GRACE_PERIOD_MS = SPAM_GRACE_PERIOD_DAYS * ONE_DAY_MS;
 
+const SRC_HANDLE_MAX_LENGTH = 25;
+const ACTION_TYPE_MAX_LENGTH = 20;
+const USER_HANDLE_MAX_LENGTH = 40;
+const DID_MAX_LENGTH = 36;
+const ACCOUNT_AGE_MAX_LENGTH = 22;
+const NON_ACCOUNT_TAG_MAX_LENGTH = 22;
+const LONG_URI_MAX_LENGTH = USER_HANDLE_MAX_LENGTH + DID_MAX_LENGTH;
+
 export interface TakedownOptions {
     did: string; // Note: This might contain an AT URI (at://...)
     src: string;
@@ -57,11 +65,22 @@ export class PostMaker {
 
             // await this.makePost(postContent);
             // logger.info(`Handled record takedown: ${postContent}`);
-            logger.debug("skipping non-account takedown for " + options.did);
+            // logger.debug("skipping non-account takedown for " + options.did);
+
+            const { handle: srcHandles } = await getAccountAgeAndHandle(options.src);
+            const srcHandlePart = srcHandles ? `${srcHandles[0]}` : `${options.src}`;
+
+            logger.debug(
+                `[${srcHandlePart}]`.padEnd(SRC_HANDLE_MAX_LENGTH) +
+                    `add ${options.label.val}`.padEnd(ACTION_TYPE_MAX_LENGTH) +
+                    `${options.did}`.padEnd(LONG_URI_MAX_LENGTH) +
+                    `(non-account takedown)`,
+            );
             return;
         }
 
         const { age: accountAge, handle: handles } = await getAccountAgeAndHandle(options.did);
+        
 
         if (accountAge !== null && accountAge < SPAM_GRACE_PERIOD_MS) {
             return;
@@ -105,10 +124,10 @@ export class PostMaker {
         await this.makePost([postContent]);
 
         logger.debug(
-            `[${srcHandlePart}]`.padEnd(20) +
-                `add ${options.label.val}`.padEnd(20) +
-                `${userHandle}`.padEnd(40) +
-                `(${options.did})`.padEnd(36) +
+            `[${srcHandlePart}]`.padEnd(SRC_HANDLE_MAX_LENGTH) +
+                `add ${options.label.val}`.padEnd(ACTION_TYPE_MAX_LENGTH) +
+                `${userHandle}`.padEnd(USER_HANDLE_MAX_LENGTH) +
+                `(${options.did})`.padEnd(DID_MAX_LENGTH) +
                 `accountAge: ${accountAge !== null ? formatDuration(accountAge) : "unknown"}`,
         );
     }
@@ -162,10 +181,10 @@ export class PostMaker {
         // logger.debug(details);
 
         logger.debug(
-            `[${srcHandlePart}]`.padEnd(20) +
-                `remove ${options.label.val}`.padEnd(20) +
-                `${userHandle}`.padEnd(40) +
-                `(${options.did})`.padEnd(36) +
+            `[${srcHandlePart}]`.padEnd(SRC_HANDLE_MAX_LENGTH) +
+                `remove ${options.label.val}`.padEnd(ACTION_TYPE_MAX_LENGTH) +
+                `${userHandle}`.padEnd(USER_HANDLE_MAX_LENGTH) +
+                `(${options.did})`.padEnd(DID_MAX_LENGTH) +
                 `time since takedown: ${timeString.trim()}`,
         );
     }
