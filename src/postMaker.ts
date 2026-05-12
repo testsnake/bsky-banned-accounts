@@ -139,8 +139,9 @@ export class PostMaker {
 
         const { handle: handles } = await getAccountAgeAndHandle(options.did);
         const { handle: srcHandles } = await getAccountAgeAndHandle(options.src);
+        const actionType = LABEL_TYPES[options.label.val] || "labeled";
 
-        const postContent = `Account ${handles?.[0] ?? options.did} was unbanned by ${srcHandles?.[0] ?? options.src}${timeString} #BskyUnbans`;
+        const postContent = `Account ${handles?.[0] ?? options.did} was un${actionType} by ${srcHandles?.[0] ?? options.src}${timeString} #BskyUnbans`;
 
         await this.makePost(postContent);
 

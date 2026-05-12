@@ -164,12 +164,13 @@ export class LabelStream {
                     // logger.debug({ label }, "Received label");
                     // console.log(`[LabelStream] [${label.src}] ${label.uri} ${label.neg ? "UNLABELED" : "LABELED"} with "${label.val}"`);
 
-
-                    const did = label.uri;
-                    const banned = !label.neg;
-                    this.onTakedown(did, banned, label.src, label).catch((err) =>
-                        this.onError(err instanceof Error ? err : new Error(String(err)))
-                    );
+                    if (label.val === "!takedown" || label.val === "!suspend" || label.val === "!hide") {
+                        const did = label.uri;
+                        const banned = !label.neg;
+                        this.onTakedown(did, banned, label.src, label).catch((err) =>
+                            this.onError(err instanceof Error ? err : new Error(String(err)))
+                        );
+                    }
                 }
             }
         });
